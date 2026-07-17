@@ -48,6 +48,10 @@ def missing_dependencies(missing: list[str]) -> bool:
         print("\nMissing dependencies:")
         for miss in missing:
             print(f" - {miss}")
+        print("\nPlease install dependencies using pip or poetry")
+        print(" pip install -r requirements.txt")
+        print(" or")
+        print(" poetry install")
         return False
 
     print("\nSystem ready.")
