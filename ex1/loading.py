@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 from importlib import import_module
 from types import ModuleType
