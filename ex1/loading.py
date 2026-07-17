@@ -1,59 +1,113 @@
-from importlib import import_module
 import sys
+from importlib import import_module
+from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd  # type: ignore
 
 
 DEPENDENCIES = {
-    "pandas": "Data manipulation ready",
-    "numpy": "Numerical computation ready",
-    "requests": "Network access ready",
-    "matplotlib": "Visualization ready",
+    "pandas": ("pandas", "Data manipulation ready"),
+    "numpy": ("numpy", "Numerical computation ready"),
+    "matplotlib": ("matplotlib.pyplot", "Visualization ready"),
 }
 
-print("LOADING STATUS:")
-print("Loading programs...")
-print("Checking dependencies:")
 
-modules = {}
-missing = []
+def check_dependencies() -> tuple[dict[str, ModuleType], list[str]]:
+    """Check whether dependencies are installed.
 
-for module_name, description in DEPENDENCIES.items():
-    try:
-        module = import_module(module_name)
-        modules[module_name] = module
-        version = getattr(module, "__version__", "unknown")
-        print(f"[OK] {module_name} ({version}) - {description}")
-    except ImportError:
-        missing.append(module_name)
-        print(f"[ERROR] {module_name} - Not installed")
+    Returns:
+        tuple[dict[str, ModuleType], list[str]]:
+            Imported modules and missing dependencies.
+    """
 
-if missing:
-    print("\nMissing dependencies:")
-    for miss in missing:
-        print(f" - {miss}")
-    sys.exit(1)
+    modules: dict[str, ModuleType] = {}
+    missing: list[str] = []
 
-print("System ready.")
+    print("LOADING STATUS: Loading programs...", end="\n\n")
+    print("Checking dependencies:")
 
-# testing code
-pd = modules["pandas"]
-np = modules["numpy"]
-requests = modules["requests"]
+    for name, (module_name, desc) in DEPENDENCIES.items():
+        try:
+            mod = import_module(module_name)
+            modules[name] = mod
 
-arr = np.random.randn(5, 3)
+            version = getattr(mod, "__version__", "unknown")
+            print(f"[OK] {name} ({version}) - {desc}")
 
-df = pd.DataFrame(
-    arr,
-    columns=["A", "B", "C"]
-)
+        except ImportError:
+            missing.append(name)
+            print(f"[ERROR] {name} - Not installed")
 
-print("\nDataFrame:")
-print(df)
+    return modules, missing
 
-response = requests.get("https://api.github.com")
-print("Status code:", response.status_code)
-print("Response:")
-print(response.json())
 
-print("\npandas version:", pd.__version__)
-print("numpy version:", np.__version__)
-# testing code
+def missing_dependencies(missing: list[str]) -> bool:
+    if missing:
+        print("\nMissing dependencies:")
+        for miss in missing:
+            print(f" - {miss}")
+        return False
+
+    print("\nSystem ready.")
+    return True
+
+
+def generate_matrix_data(
+    pd_module: ModuleType,
+    np_module: ModuleType,
+) -> pd.DataFrame:
+    """Generate a DataFrame with random numbers."""
+
+    print("\nAnalyzing Matrix data...")
+    arr = np_module.random.randn(1000, 3)
+    return pd_module.DataFrame(
+        arr,
+        columns=["A", "B", "C"],
+    )
+
+
+def generate_visual_data(
+    df: pd.DataFrame,
+    plt_module: ModuleType,
+    dest: str,
+) -> None:
+    """Generate analysis image."""
+
+    print("Generating visualization...")
+    plt_module.figure(figsize=(10, 5))
+    plt_module.plot(df["A"])
+    plt_module.title("Column A")
+    plt_module.savefig(dest)
+    print("Analysis complete")
+    print("Results saved to:", dest)
+    plt_module.close()
+
+
+def main() -> None:
+    modules, missing = check_dependencies()
+
+    if not missing_dependencies(missing):
+        sys.exit(1)
+
+    df = generate_matrix_data(
+        modules["pandas"],
+        modules["numpy"],
+    )
+    print("Processing 1000 data points...")
+    print("\nDataFrame:")
+    print(df.head())
+
+    print("\nStatistics:")
+    print(df.describe(), end="\n\n")
+
+    generate_visual_data(
+        df,
+        modules["matplotlib"],
+        "matrix_analysis.png",
+    )
+
+
+if __name__ == "__main__":
+    main()
