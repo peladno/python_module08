@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from dotenv import load_dotenv
+from importlib import import_module
+import dotenv
 import os
 import sys
 
@@ -16,18 +17,28 @@ class ConfigurationError(Exception):
     pass
 
 
-def check_mode() -> None:
+def check_import() -> None:
+    try:    
+        module = import_module("dotenv")
+    except ImportError as e:
+        print(e)
+
+
+def check_mode() -> bool:
     mode = os.getenv("MATRIX_MODE")
     if not mode:
-        return
+        return False
     if mode == "development":
         print("mode: development")
+        return True
     if mode == "production":
         print("mode: production")
+        return True
+    return False
 
 
 def env_exist() -> bool:
-    load = load_dotenv(".env", verbose=True, override=True)
+    load = dotenv.load_dotenv(".env", verbose=True, override=True)
     if not load:
         raise ConfigurationError("env file doesn't exist")
     return True
@@ -36,6 +47,22 @@ def env_exist() -> bool:
 def check_env() -> list[str]:
     missing = [k for k in ENV_DATA if not os.getenv(k)]
     return missing
+
+
+def check_db() -> None:
+    pass
+
+    
+def check_api_key() -> None:
+    pass
+
+
+def log() -> None:
+    pass
+
+
+def check_endpoint() -> None:
+    pass
 
 
 def main() -> int:
