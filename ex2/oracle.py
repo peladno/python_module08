@@ -1,84 +1,89 @@
 #!/usr/bin/env python3
 from importlib import import_module
-import dotenv
+from types import ModuleType
 import os
-import sys
+from typing import Any
 
 ENV_DATA = {
-    'MATRIX_MODE',
-    'DATABASE_URL',
-    'API_KEY',
-    'LOG_LEVEL',
-    'ZION_ENDPOINT'
+    "MATRIX_MODE",
+    "DATABASE_URL",
+    "API_KEY",
+    "LOG_LEVEL",
+    "ZION_ENDPOINT",
 }
 
 
 class ConfigurationError(Exception):
+    """Config error"""
     pass
 
 
-def check_import() -> None:
-    try:    
-        module = import_module("dotenv")
-    except ImportError as e:
-        print(e)
+def import_dotenv() -> ModuleType | None:
+    """Check if the dotenv module exists, if exist returns the module"""
+    try:
+        return import_module("dotenv")
+    except ImportError:
+        print(
+            "python-dotenv is not installed.\n"
+            "Run: pip install python-dotenv"
+        )
+        return None
 
 
-def check_mode() -> bool:
+def load_env_file(dotenv: ModuleType, env: str) -> Any:
+    """Load enviroment file"""
+    loaded = dotenv.load_dotenv(env, verbose=True, override=False)
+
+    if not loaded:
+        raise ConfigurationError(".env file is missing")
+
+    return loaded
+
+
+def check_mode() -> None:
+    """Checks MATRIX MODE enviroment variable"""
     mode = os.getenv("MATRIX_MODE")
-    if not mode:
-        return False
+
     if mode == "development":
         print("mode: development")
-        return True
+        return
+
     if mode == "production":
         print("mode: production")
-        return True
-    return False
+        return
+
+    raise ConfigurationError(
+        f"MATRIX_MODE '{mode}' is invalid. "
+        "Expected 'development' or 'production'."
+    )
 
 
-def env_exist() -> bool:
-    load = dotenv.load_dotenv(".env", verbose=True, override=True)
-    if not load:
-        raise ConfigurationError("env file doesn't exist")
-    return True
+def check_env_variables() -> list[str]:
+    """Checks missing enviroment variables in file"""
+    return [key for key in ENV_DATA if not os.getenv(key)]
 
 
-def check_env() -> list[str]:
-    missing = [k for k in ENV_DATA if not os.getenv(k)]
-    return missing
+def main() -> None:
+    dotenv = import_dotenv()
 
+    if not dotenv:
+        return
 
-def check_db() -> None:
-    pass
+    if not load_env_file(dotenv, ".env"):
+        return
 
-    
-def check_api_key() -> None:
-    pass
+    missing = check_env_variables()
 
-
-def log() -> None:
-    pass
-
-
-def check_endpoint() -> None:
-    pass
-
-
-def main() -> int:
-    try:
-        env_exist()
-    except ConfigurationError as e:
-        print("ERROR:", e, file=sys.stderr)
-        return 1
-
-    missing = check_env()
     if missing:
-        print(f"ERROR: Variables missing: {', '.join(missing)}")
-
+        raise ConfigurationError(
+            f"Variables missing: {', '.join(missing)}"
+        )
+    print("Configuration loaded")
     check_mode()
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        main()
+    except ConfigurationError as error:
+        print(f"ERROR: {error}")
