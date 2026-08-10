@@ -81,7 +81,7 @@ def generate_visual_data(
 def main() -> None:
     modules, missing = check_dependencies()
 
-    if not missing_dependencies(missing):
+    if missing_dependencies(missing) is not True:
         sys.exit(1)
 
     pd = modules["pandas"]
