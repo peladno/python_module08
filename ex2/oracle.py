@@ -97,14 +97,15 @@ def check_zion_network() -> None:
 
 
 def security_check() -> None:
-    """Security checks."""
-
     print("\nEnvironment security check:")
 
+    missing = check_env_variables()
     print("[OK] No hardcoded secrets detected")
 
-    if os.path.exists(".env"):
+    if os.path.exists(".env") and not missing:
         print("[OK] .env file properly configured")
+    elif os.path.exists(".env"):
+        print("[WARNING] .env file exists but is missing variables")
     else:
         print("[WARNING] .env file not found")
 
