@@ -2,11 +2,7 @@
 import sys
 from importlib import import_module
 from types import ModuleType
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    import pandas as pd  # type: ignore
-
+from typing import Any
 
 DEPENDENCIES = {
     "pandas": ("pandas", "Data manipulation ready"),
@@ -22,7 +18,6 @@ def check_dependencies() -> tuple[dict[str, ModuleType], list[str]]:
         tuple[dict[str, ModuleType], list[str]]:
             Imported modules and missing dependencies.
     """
-
     modules: dict[str, ModuleType] = {}
     missing: list[str] = []
 
@@ -33,10 +28,8 @@ def check_dependencies() -> tuple[dict[str, ModuleType], list[str]]:
         try:
             mod = import_module(module_name)
             modules[name] = mod
-
             version = getattr(mod, "__version__", "unknown")
             print(f"[OK] {name} ({version}) - {desc}")
-
         except ImportError:
             missing.append(name)
             print(f"[ERROR] {name} - Not installed")
@@ -62,24 +55,19 @@ def missing_dependencies(missing: list[str]) -> bool:
 def generate_matrix_data(
     pd_module: ModuleType,
     np_module: ModuleType,
-) -> pd.DataFrame:
+) -> Any:
     """Generate a DataFrame with random numbers."""
-
     print("\nAnalyzing Matrix data...")
     arr = np_module.random.randn(1000, 3)
-    return pd_module.DataFrame(
-        arr,
-        columns=["A", "B", "C"],
-    )
+    return pd_module.DataFrame(arr, columns=["A", "B", "C"])
 
 
 def generate_visual_data(
-    df: pd.DataFrame,
+    df: Any,
     plt_module: ModuleType,
     dest: str,
 ) -> None:
     """Generate analysis image."""
-
     print("Generating visualization...")
     plt_module.figure(figsize=(10, 5))
     plt_module.plot(df["A"])
@@ -96,10 +84,16 @@ def main() -> None:
     if not missing_dependencies(missing):
         sys.exit(1)
 
-    df = generate_matrix_data(
-        modules["pandas"],
-        modules["numpy"],
-    )
+    pd = modules["pandas"]
+    np = modules["numpy"]
+    plt = modules["matplotlib"]
+
+    try:
+        df = generate_matrix_data(pd, np)
+    except Exception as e:
+        print("Error generating data:", e)
+        sys.exit(2)
+
     print("Processing 1000 data points...")
     print("\nDataFrame:")
     print(df.head())
@@ -107,11 +101,11 @@ def main() -> None:
     print("\nStatistics:")
     print(df.describe(), end="\n\n")
 
-    generate_visual_data(
-        df,
-        modules["matplotlib"],
-        "matrix_analysis.png",
-    )
+    try:
+        generate_visual_data(df, plt, "matrix_analysis.png")
+    except Exception as e:
+        print("Error generating visualization:", e)
+        sys.exit(3)
 
 
 if __name__ == "__main__":
