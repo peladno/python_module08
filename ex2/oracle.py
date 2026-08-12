@@ -2,6 +2,7 @@
 from importlib import import_module
 from types import ModuleType
 import os
+import sys
 
 
 ENV_DATA = {
@@ -117,6 +118,8 @@ def main() -> None:
 
     if dotenv:
         load_env_file(dotenv)
+    else:
+        sys.exit(1)
 
     print("Configuration loaded:")
 
