@@ -1,3 +1,4 @@
 matrix_env
 .vscode
 .mypy_cache
+.venv
